@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\ProductVariantPrice;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
@@ -10,4 +11,8 @@ class Product extends Model
         'title', 'sku', 'description'
     ];
 
+    public function variantPrices()
+    {
+        return $this->hasMany(ProductVariantPrice::class, 'product_id');
+    }
 }

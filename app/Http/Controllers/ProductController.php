@@ -3,21 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Variant;
+use Illuminate\View\View;
+use Illuminate\Http\Request;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
-use App\Models\Variant;
-use Illuminate\Http\Request;
+use App\Repositories\ProductRepository;
 
 class ProductController extends Controller
 {
+    public $productRepository;
+
+    public function __construct(ProductRepository $productRepository)
+    {
+        $this->productRepository = $productRepository;
+    }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Http\Response|\Illuminate\View\View
+     * @param \Illuminate\Http\Request $request
+     * @return View
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('products.index');
+        $products = $this->productRepository->productList($request);
+        //dd($products);
+        return view('products.index', ['products' => $products]);
     }
 
     /**
@@ -39,7 +51,6 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-
     }
 
 
@@ -51,7 +62,6 @@ class ProductController extends Controller
      */
     public function show($product)
     {
-
     }
 
     /**
