@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use App\Models\Variant;
+use Illuminate\Support\Facades\DB;
 
 class ProductRepository
 {
@@ -76,5 +77,31 @@ class ProductRepository
 
 
         return $query->get();
+    }
+
+    /**
+     * Update product 
+     * 
+     * @param Object $request
+     * @return bool
+     */
+    public function updateProduct($request)
+    {
+        try {
+            DB::beginTransaction();
+            $product = Product::find($request['id']);
+            if ($product == null) {
+                return false;
+            }
+            $product->title = $request['title'];
+            $product->sku = $request['sku'];
+            $product->description = $request['description'];
+            $product->save();
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
     }
 }
