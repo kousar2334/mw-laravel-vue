@@ -26,6 +26,6 @@ class ProductRepository
                 ->select('id', 'product_id', 'price', 'stock', 'product_variant_one', 'product_variant_two', 'product_variant_three');
         }]);
 
-        return $query->paginate(10)->withQueryString();
+        return $query->paginate(5)->withQueryString();
     }
 }
