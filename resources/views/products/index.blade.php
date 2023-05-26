@@ -7,14 +7,27 @@
 
 
     <div class="card">
-        <form action="" method="get" class="card-header">
+        <form action="{{ route('product.index') }}" method="get" class="card-header">
             <div class="form-row justify-content-between">
                 <div class="col-md-2">
-                    <input type="text" name="title" placeholder="Product Title" class="form-control">
+                    <input type="text" name="title" placeholder="Product Title" class="form-control"
+                        value="{{ request()->has('title') ? request()->get('title') : '' }}">
                 </div>
                 <div class="col-md-2">
                     <select name="variant" id="" class="form-control">
-
+                        <option>Select A Variant</option>
+                        @foreach ($variants as $variant)
+                            @if ($variant->productVariants != null)
+                                <optgroup label="{{ $variant->title }}">
+                                    @foreach ($variant->productVariants as $product_variant)
+                                        <option value="{{ $product_variant->id }}"
+                                            {{ request()->has('variant') && request()->get('variant') == $product_variant->id ? 'selected' : '' }}>
+                                            {{ $product_variant->variant }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        @endforeach
                     </select>
                 </div>
 
@@ -24,16 +37,28 @@
                             <span class="input-group-text">Price Range</span>
                         </div>
                         <input type="text" name="price_from" aria-label="First name" placeholder="From"
-                            class="form-control">
-                        <input type="text" name="price_to" aria-label="Last name" placeholder="To" class="form-control">
+                            class="form-control"
+                            value="{{ request()->has('price_from') ? request()->get('price_from') : '' }}">
+                        <input type="text" name="price_to" aria-label="Last name" placeholder="To" class="form-control"
+                            value="{{ request()->has('price_to') ? request()->get('price_to') : '' }}">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <input type="date" name="date" placeholder="Date" class="form-control">
+                    <input type="date" name="date" placeholder="Date" class="form-control"
+                        value="{{ request()->has('date') ? request()->get('date') : '' }}">
                 </div>
                 <div class="col-md-1">
                     <button type="submit" class="btn btn-primary float-right"><i class="fa fa-search"></i></button>
                 </div>
+                @if (request()->has('date') ||
+                        request()->has('title') ||
+                        request()->has('price_from') ||
+                        request()->has('price_to') ||
+                        request()->has('variant'))
+                    <div class="col-md-1">
+                        <a href="{{ route('product.index') }}" class="btn btn-danger">Clear</a>
+                    </div>
+                @endif
             </div>
         </form>
 

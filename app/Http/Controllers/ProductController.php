@@ -27,9 +27,9 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $variants = $this->productRepository->variants();
         $products = $this->productRepository->productList($request);
-        //dd($products);
-        return view('products.index', ['products' => $products]);
+        return view('products.index', ['products' => $products, 'variants' => $variants]);
     }
 
     /**
