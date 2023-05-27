@@ -22,4 +22,19 @@ class ProductVariantPrice extends Model
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_three', 'id');
     }
+
+    public function getTitle()
+    {
+        $array = [];
+        if ($this->productVariantOne != null) {
+            array_push($array, $this->productVariantOne->variant);
+        }
+        if ($this->productVariantTwo != null) {
+            array_push($array, $this->productVariantTwo->variant);
+        }
+        if ($this->productVariantThree != null) {
+            array_push($array, $this->productVariantThree->variant);
+        }
+        return implode('/', $array);
+    }
 }

@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\ProductVariantPrice;
 use App\Models\Variant;
 use Illuminate\Support\Facades\DB;
 
@@ -78,6 +80,51 @@ class ProductRepository
 
         return $query->get();
     }
+    /**
+     * Will return product details
+     *
+     *@param Int $product_id
+     */
+    public function productDetails($product_id)
+    {
+        return Product::where('id', $product_id)->first();
+    }
+
+    /**
+     * Will return product variants
+     *
+     *@param Int $product_id
+     *@return Collections
+     */
+    public function productVariants($product_id)
+    {
+        return ProductVariant::where('product_id', $product_id)
+            ->select('variant as tags', 'variant_id as option')
+            ->get();
+    }
+
+    /**
+     * Will return product variant prices
+     *
+     *@param Int $product_id
+     *@return Collections
+     */
+    public function productVariantsPrices($product_id)
+    {
+
+        $prices = ProductVariantPrice::with(['productVariantOne', 'productVariantTwo', 'productVariantThree'])->where('product_id', $product_id)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'price' => $item->price,
+                    'stock' => $item->stock,
+                    'title' => $item->getTitle()
+                ];
+            });
+
+        return $prices;
+    }
 
     /**
      * Update product 
@@ -97,10 +144,43 @@ class ProductRepository
             $product->sku = $request['sku'];
             $product->description = $request['description'];
             $product->save();
+
+            //Update product variant
+            $product_variants = json_decode($request['product_variant'], true);
+            $product->variants()->delete();
+            if (!empty($product_variants)) {
+                foreach ($product_variants as $variant) {
+                    $new_variant = new ProductVariant();
+                    $new_variant->variant = $variant['tags'];
+                    $new_variant->variant_id = $variant['option'];
+                    $new_variant->product_id = $product->id;
+                    $new_variant->save();
+                }
+            }
+
+            //Update variant price
+            $product_variant_prices = json_decode($request['product_variant_prices'], true);
+            if (!empty($product_variant_prices)) {
+                foreach ($product_variant_prices as $variant_price) {
+                    $variant_array = explode('/', trim($variant_price['title'], '/'));
+                    if (sizeof($variant_array) > 0) {
+                        $new_price = new ProductVariantPrice();
+                        $new_price->price = $variant_price['price'];
+                        $new_price->stock = $variant_price['stock'];
+                        $new_price->product_variant_one = ProductVariant::where('product_id', $product->id)->where('variant', $variant_array[0])->first()->id;
+                        $new_price->product_variant_two = sizeof($variant_array) > 1 ? ProductVariant::where('product_id', $product->id)->where('variant', $variant_array[1])->first()->id : null;
+                        $new_price->product_variant_three = sizeof($variant_array) > 2 ? ProductVariant::where('product_id', $product->id)->where('variant', $variant_array[2])->first()->id : null;
+                        $new_price->product_id = $product->id;
+                        $new_price->save();
+                    }
+                }
+            }
+
             DB::commit();
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
+            dd($e->getMessage());
             return false;
         }
     }

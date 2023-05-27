@@ -2252,9 +2252,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
 
 
 
@@ -2271,19 +2268,19 @@ __webpack_require__.r(__webpack_exports__);
     product: {
       type: Object,
       required: true
+    },
+    product_variant: {
+      type: Array,
+      required: true
+    },
+    product_variant_prices: {
+      type: Array,
+      required: true
     }
   },
   data: function data() {
     return {
-      product_name: '',
-      product_sku: '',
-      description: '',
       images: [],
-      product_variant: [{
-        option: this.variants[0].id,
-        tags: []
-      }],
-      product_variant_prices: [],
       errors: [],
       dropzoneOptions: {
         url: 'https://httpbin.org/post',
@@ -2308,8 +2305,7 @@ __webpack_require__.r(__webpack_exports__);
         return !selected_variants.some(function (entry2) {
           return entry1 == entry2;
         });
-      }); // console.log(available_variants)
-
+      });
       this.product_variant.push({
         option: available_variants[0],
         tags: []
@@ -2341,12 +2337,16 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       var self = this;
-      var ans = arr[0].reduce(function (ans, value) {
+      var ans = arr.reduce(function (ans, value) {
         return ans.concat(self.getCombn(arr.slice(1), pre + value + '/'));
       }, []);
       return ans;
     },
-    // store product into database
+    removeVariant: function removeVariant(index) {
+      this.product_variant = this.product_variant.splice(1, index);
+      checkVariant();
+    },
+    // Update product 
     updateProduct: function updateProduct() {
       var _this2 = this;
 
@@ -2354,7 +2354,9 @@ __webpack_require__.r(__webpack_exports__);
         id: this.product.id,
         title: this.product.title,
         sku: this.product.sku,
-        description: this.product.description
+        description: this.product.description,
+        product_variant: JSON.stringify(this.product_variant),
+        product_variant_prices: JSON.stringify(this.product_variant_prices)
       };
       axios.put('/product/' + this.product.id, product).then(function (response) {
         console.log(response.data);
@@ -51330,7 +51332,12 @@ var render = function() {
                       _vm._l(_vm.variants, function(variant) {
                         return _c(
                           "option",
-                          { domProps: { value: variant.id } },
+                          {
+                            domProps: {
+                              value: variant.id,
+                              selected: variant.id == _vm.product_variant.option
+                            }
+                          },
                           [
                             _vm._v(
                               "\n                                        " +
@@ -51346,41 +51353,47 @@ var render = function() {
                 ]),
                 _vm._v(" "),
                 _c("div", { staticClass: "col-md-8" }, [
-                  _c(
-                    "div",
-                    { staticClass: "form-group" },
-                    [
-                      _vm.product_variant.length != 1
-                        ? _c(
-                            "label",
-                            {
-                              staticClass: "float-right text-primary",
-                              staticStyle: { cursor: "pointer" },
-                              on: {
-                                click: function($event) {
-                                  _vm.product_variant.splice(index, 1)
-                                  _vm.checkVariant
-                                }
+                  _c("div", { staticClass: "form-group" }, [
+                    _vm.product_variant.length != 1
+                      ? _c(
+                          "label",
+                          {
+                            staticClass: "float-right text-primary",
+                            staticStyle: { cursor: "pointer" },
+                            on: {
+                              click: function($event) {
+                                return _vm.removeVariant(index)
                               }
-                            },
-                            [_vm._v("Remove")]
-                          )
-                        : _c("label", { attrs: { for: "" } }, [_vm._v(".")]),
-                      _vm._v(" "),
-                      _c("input-tag", {
-                        staticClass: "form-control",
-                        on: { input: _vm.checkVariant },
-                        model: {
-                          value: item.tags,
-                          callback: function($$v) {
-                            _vm.$set(item, "tags", $$v)
+                            }
                           },
-                          expression: " item.tags "
+                          [_vm._v("Remove")]
+                        )
+                      : _c("label", { attrs: { for: "" } }, [_vm._v(".")]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: item.tags,
+                          expression: "item.tags"
                         }
-                      })
-                    ],
-                    1
-                  )
+                      ],
+                      staticClass: "form-control",
+                      domProps: { value: item.tags },
+                      on: {
+                        input: [
+                          function($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(item, "tags", $event.target.value)
+                          },
+                          _vm.checkVariant
+                        ]
+                      }
+                    })
+                  ])
                 ])
               ])
             }),
@@ -51423,7 +51436,7 @@ var render = function() {
                               name: "model",
                               rawName: "v-model",
                               value: variant_price.price,
-                              expression: " variant_price.price "
+                              expression: "variant_price.price"
                             }
                           ],
                           staticClass: "form-control",
@@ -51451,7 +51464,7 @@ var render = function() {
                               name: "model",
                               rawName: "v-model",
                               value: variant_price.stock,
-                              expression: " variant_price.stock "
+                              expression: "variant_price.stock"
                             }
                           ],
                           staticClass: "form-control",

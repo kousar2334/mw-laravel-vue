@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
 use App\Http\Requests\ProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -74,7 +75,9 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $variants = Variant::all();
-        return view('products.edit', compact('variants', 'product'));
+        $product_variant = $this->productRepository->productVariants($product->id);
+        $product_variant_prices = $this->productRepository->productVariantsPrices($product->id);
+        return view('products.edit', ['variants' => $variants, 'product' => $product, 'product_variant' => $product_variant, 'product_variant_prices' => $product_variant_prices]);
     }
 
     /**
@@ -85,6 +88,7 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request)
     {
+
         $res = $this->productRepository->updateProduct($request);
         if ($res) {
             return response()->json([

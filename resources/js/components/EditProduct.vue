@@ -51,13 +51,13 @@
                         <h6 class="m-0 font-weight-bold text-primary">Variants</h6>
                     </div>
                     <div class="card-body">
-                        <div class="row"
-                            v-for="(item, index) in                        product_variant                       ">
+                        <div class="row" v-for="(item, index) in product_variant">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Option</label>
                                     <select v-model="item.option" class="form-control">
-                                        <option v-for="variant in variants" :value="variant.id">
+                                        <option v-for="variant in variants" :value="variant.id"
+                                            :selected="variant.id == product_variant.option">
                                             {{ variant.title }}
                                         </option>
                                     </select>
@@ -65,19 +65,16 @@
                             </div>
                             <div class="col-md-8">
                                 <div class="form-group">
-                                    <label v-if="product_variant.length != 1"
-                                        @click="product_variant.splice(index, 1); checkVariant"
+                                    <label v-if="product_variant.length != 1" @click="removeVariant(index)"
                                         class="float-right text-primary" style="cursor: pointer;">Remove</label>
                                     <label v-else for="">.</label>
-                                    <input-tag v-model=" item.tags " @input=" checkVariant "
-                                        class="form-control"></input-tag>
+                                    <input v-model="item.tags" @input="checkVariant" class="form-control" />
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer"
-                        v-if=" product_variant.length < variants.length && product_variant.length < 3 ">
-                        <button @click=" newVariant " class="btn btn-primary">Add another option</button>
+                    <div class="card-footer" v-if="product_variant.length < variants.length && product_variant.length < 3">
+                        <button @click="newVariant" class="btn btn-primary">Add another option</button>
                     </div>
 
                     <div class="card-header text-uppercase">Preview</div>
@@ -93,13 +90,13 @@
                                 </thead>
                                 <tbody>
                                     <tr
-                                        v-for="                       variant_price                        in                        product_variant_prices                       ">
+                                        v-for="                                                 variant_price                                                  in                                                  product_variant_prices                                                 ">
                                         <td>{{ variant_price.title }}</td>
                                         <td>
-                                            <input type="text" class="form-control" v-model=" variant_price.price ">
+                                            <input type="text" class="form-control" v-model="variant_price.price">
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" v-model=" variant_price.stock ">
+                                            <input type="text" class="form-control" v-model="variant_price.stock">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -110,7 +107,7 @@
             </div>
         </div>
 
-        <button @click=" updateProduct " type="submit" class="btn btn-lg btn-primary">Save Changes</button>
+        <button @click="updateProduct" type="submit" class="btn btn-lg btn-primary">Save Changes</button>
         <button type="button" class="btn btn-secondary btn-lg">Cancel</button>
     </section>
 </template>
@@ -133,21 +130,19 @@ export default {
         product: {
             type: Object,
             required: true
+        },
+        product_variant: {
+            type: Array,
+            required: true
+        },
+        product_variant_prices: {
+            type: Array,
+            required: true
         }
     },
     data() {
         return {
-            product_name: '',
-            product_sku: '',
-            description: '',
             images: [],
-            product_variant: [
-                {
-                    option: this.variants[0].id,
-                    tags: []
-                }
-            ],
-            product_variant_prices: [],
             errors: [],
             dropzoneOptions: {
                 url: 'https://httpbin.org/post',
@@ -162,8 +157,7 @@ export default {
         newVariant() {
             let all_variants = this.variants.map(el => el.id)
             let selected_variants = this.product_variant.map(el => el.option);
-            let available_variants = all_variants.filter(entry1 => !selected_variants.some(entry2 => entry1 == entry2))
-            // console.log(available_variants)
+            let available_variants = all_variants.filter(entry1 => !selected_variants.some(entry2 => entry1 == entry2));
 
             this.product_variant.push({
                 option: available_variants[0],
@@ -195,19 +189,26 @@ export default {
                 return pre;
             }
             let self = this;
-            let ans = arr[0].reduce(function (ans, value) {
+            let ans = arr.reduce(function (ans, value) {
                 return ans.concat(self.getCombn(arr.slice(1), pre + value + '/'));
             }, []);
             return ans;
         },
 
-        // store product into database
+        removeVariant(index) {
+            this.product_variant = this.product_variant.splice(1, index);
+            checkVariant();
+        },
+
+        // Update product 
         updateProduct() {
             let product = {
                 id: this.product.id,
                 title: this.product.title,
                 sku: this.product.sku,
                 description: this.product.description,
+                product_variant: JSON.stringify(this.product_variant),
+                product_variant_prices: JSON.stringify(this.product_variant_prices)
             }
 
             axios.put('/product/' + this.product.id, product).then(response => {
